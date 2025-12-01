@@ -8,6 +8,7 @@ app = FastAPI()
 models.Base.metadata.create_all(engine)
 
 def get_db():
+
     db = SessionLocal()
     try:
 
@@ -19,7 +20,7 @@ def get_db():
 
 @app.post('/blog',status_code=201)
 def create(request:schemas.Blog,db:Session=Depends(get_db)): 
-    """coverting "Session" Into Pydantic model By "Depends"""
+    """ Coverting "Session" Into Pydantic Model By "Depends" """
     new_blog = models.Blog(id=request.id,title=request.title,body=request.body)
     db.add(new_blog)
     db.commit()
