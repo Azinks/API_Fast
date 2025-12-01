@@ -28,10 +28,12 @@ def create(request:schemas.Blog,db:Session=Depends(get_db)):
 
 @app.get('/blog')
 def all_items(db:Session=Depends(get_db)):
+    """Getting All The Values Stored Inside The DB"""
     blogs = db.query(models.Blog).all()
     return blogs
 
 @app.get('/blog/{id}')
 def display_id(id:int,db:Session=Depends(get_db)):
+    """ Getting A Single Value By {id} """
     blogs = db.query(models.Blog).filter(models.Blog.id==id).first()
     return blogs
