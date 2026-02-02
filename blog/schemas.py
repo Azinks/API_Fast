@@ -19,4 +19,10 @@ class User(BaseModel):
     email : str
     password : str
 
+class ResponseUser(BaseModel):
+    id : int
+    user_name : str
+
+    class Config():
+        orm_mode = True
             
