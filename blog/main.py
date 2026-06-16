@@ -16,7 +16,7 @@ def get_db():
     finally:
         db.close()    
 
-@app.post('/blog',status_code=status.HTTP_201_CREATED)
+@app.post('/blog',status_code=status.HTTP_201_CREATED,tags=['Blog'])
 def create(request:schemas.Blog,db:Session=Depends(get_db)): 
     """ Coverting "Session" Into Pydantic Model By "Depends" """
     new_blog = models.Blog(id=request.id,title=request.title,body=request.body)
@@ -25,7 +25,7 @@ def create(request:schemas.Blog,db:Session=Depends(get_db)):
     db.refresh(new_blog)
     return new_blog
 
-@app.delete('/blog/{id}')
+@app.delete('/blog/{id}',tags=['Blog'])
 def deleted_id(id:int,db:Session=Depends(get_db)):
     """ "synchronize_session=False means:" Dont try to update ORM objects in the session — we don’t need it, just execute the SQL delete fast """
     deleted=db.query(models.Blog).filter(models.Blog.id==id)
@@ -37,13 +37,13 @@ def deleted_id(id:int,db:Session=Depends(get_db)):
         db.commit()
     return {'Done':prev_id}
 
-@app.get('/blog',status_code=status.HTTP_302_FOUND,response_model=List[schemas.ResponseBlog])
+@app.get('/blog',status_code=status.HTTP_302_FOUND,response_model=List[schemas.ResponseBlog],tags=['Blog'])
 def all_items(db:Session=Depends(get_db)):
     """Getting All The Values Stored Inside The DB"""
     blogs = db.query(models.Blog).all()
     return blogs
 
-@app.get('/blog/{id}',status_code=status.HTTP_200_OK)
+@app.get('/blog/{id}',status_code=status.HTTP_200_OK,tags=['Blog'])
 def display_id(id:int,response:Response,db:Session=Depends(get_db)):
     """ Getting A Single Value By {id} """
     blogs = db.query(models.Blog).filter(models.Blog.id==id).first()
@@ -54,8 +54,8 @@ def display_id(id:int,response:Response,db:Session=Depends(get_db)):
     else:
         return blogs
 
-@app.put('/blog/{id}')
-def blog_update(id:int,request:schemas.Blog,db:Session=Depends(get_db)):
+@app.put('/blog/{id}',tags=['Blog'])
+def update(id:int,request:schemas.Blog,db:Session=Depends(get_db)):
     updated = db.query(models.Blog).filter(models.Blog.id==id)
     blog=updated.first()
     if not blog:
@@ -65,8 +65,9 @@ def blog_update(id:int,request:schemas.Blog,db:Session=Depends(get_db)):
         db.commit()
     db.refresh(blog)#{"details": "updated", "id": id}   
     return blog
+"----------------------------------------------------------------------------------------------------------------------------"
 
-@app.post('/user',response_model=schemas.ResponseUser)
+@app.post('/user',response_model=schemas.ResponseUser,tags=['User']) #response_model=schemas.ResponseUser is use to hide the sensitive data 
 def create_user(request:schemas.User,db:Session=Depends(get_db)):
     hashPass = hash_password(request.password)
     new_user = models.User(id=request.id,user_name=request.username,email=request.email,password=hashPass)
@@ -75,12 +76,12 @@ def create_user(request:schemas.User,db:Session=Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-@app.get('/user',status_code=status.HTTP_200_OK ,response_model=List[schemas.ResponseUser])
+@app.get('/user',status_code=status.HTTP_200_OK ,response_model=List[schemas.ResponseUser],tags=['User'])
 def fetch_users(db:Session=Depends(get_db)):
     users = db.query(models.User).all()
     return users
 
-@app.delete('/user/{id}')
+@app.delete('/user/{id}',tags=['User'])
 def delete_user(id:int,db:Session=Depends(get_db)):
     deleted=db.query(models.User).filter(models.User.id==id)
     prev_id=id
@@ -91,13 +92,13 @@ def delete_user(id:int,db:Session=Depends(get_db)):
         db.commit()
     return {'Done':prev_id}
 
-@app.put('/user/{id}')
+@app.put('/user/{id}',tags=['User'])
 def update_user(id:int,new_id:int,request:schemas.User,db:Session=Depends(get_db)):
     updated = db.query(models.User).filter(models.User.id==id)
     prev_id = updated.first()
     if not prev_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f'User Not Found {id}')
     else:
-        updated.update({models.User.id:new_id},synchronize_session=False)
+        updated.update({models.User.id: request.id,models.User.user_name: request.username,models.User.email: request.email}, synchronize_session=False)
         db.commit()
     return f'Sucess' 
