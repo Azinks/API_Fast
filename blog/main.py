@@ -17,7 +17,7 @@ def get_db():
         db.close()    
 
 @app.post('/blog',status_code=status.HTTP_201_CREATED,tags=['Blog'])
-def create(request:schemas.Blog,db:Session=Depends(get_db)): 
+async def create(request:schemas.Blog,db:Session=Depends(get_db)): 
     """ Coverting "Session" Into Pydantic Model By "Depends" """
     new_blog = models.Blog(id=request.id,title=request.title,body=request.body)
     db.add(new_blog)
@@ -26,7 +26,7 @@ def create(request:schemas.Blog,db:Session=Depends(get_db)):
     return new_blog
 
 @app.delete('/blog/{id}',tags=['Blog'])
-def deleted_id(id:int,db:Session=Depends(get_db)):
+async def deleted_id(id:int,db:Session=Depends(get_db)):
     """ "synchronize_session=False means:" Dont try to update ORM objects in the session — we don’t need it, just execute the SQL delete fast """
     deleted=db.query(models.Blog).filter(models.Blog.id==id)
     prev_id=id
@@ -38,13 +38,13 @@ def deleted_id(id:int,db:Session=Depends(get_db)):
     return {'Done':prev_id}
 
 @app.get('/blog',status_code=status.HTTP_302_FOUND,response_model=List[schemas.ResponseBlog],tags=['Blog'])
-def all_items(db:Session=Depends(get_db)):
+async def all_items(db:Session=Depends(get_db)):
     """Getting All The Values Stored Inside The DB"""
     blogs = db.query(models.Blog).all()
     return blogs
 
 @app.get('/blog/{id}',status_code=status.HTTP_200_OK,tags=['Blog'])
-def display_id(id:int,response:Response,db:Session=Depends(get_db)):
+async def display_id(id:int,response:Response,db:Session=Depends(get_db)):
     """ Getting A Single Value By {id} """
     blogs = db.query(models.Blog).filter(models.Blog.id==id).first()
     if not blogs:
@@ -55,7 +55,7 @@ def display_id(id:int,response:Response,db:Session=Depends(get_db)):
         return blogs
 
 @app.put('/blog/{id}',tags=['Blog'])
-def update(id:int,request:schemas.Blog,db:Session=Depends(get_db)):
+async def update(id:int,request:schemas.Blog,db:Session=Depends(get_db)):
     updated = db.query(models.Blog).filter(models.Blog.id==id)
     blog=updated.first()
     if not blog:
@@ -68,7 +68,7 @@ def update(id:int,request:schemas.Blog,db:Session=Depends(get_db)):
 "----------------------------------------------------------------------------------------------------------------------------"
 
 @app.post('/user',response_model=schemas.ResponseUser,tags=['User']) #response_model=schemas.ResponseUser is use to hide the sensitive data 
-def create_user(request:schemas.User,db:Session=Depends(get_db)):
+async def create_user(request:schemas.User,db:Session=Depends(get_db)):
     hashPass = hash_password(request.password)
     new_user = models.User(id=request.id,user_name=request.username,email=request.email,password=hashPass)
     db.add(new_user)
@@ -77,12 +77,12 @@ def create_user(request:schemas.User,db:Session=Depends(get_db)):
     return new_user
 
 @app.get('/user',status_code=status.HTTP_200_OK ,response_model=List[schemas.ResponseUser],tags=['User'])
-def fetch_users(db:Session=Depends(get_db)):
+async def fetch_users(db:Session=Depends(get_db)):
     users = db.query(models.User).all()
     return users
 
 @app.delete('/user/{id}',tags=['User'])
-def delete_user(id:int,db:Session=Depends(get_db)):
+async def delete_user(id:int,db:Session=Depends(get_db)):
     deleted=db.query(models.User).filter(models.User.id==id)
     prev_id=id
     if not deleted.first():
@@ -93,7 +93,7 @@ def delete_user(id:int,db:Session=Depends(get_db)):
     return {'Done':prev_id}
 
 @app.put('/user/{id}',tags=['User'])
-def update_user(id:int,new_id:int,request:schemas.User,db:Session=Depends(get_db)):
+async def update_user(id:int,new_id:int,request:schemas.User,db:Session=Depends(get_db)):
     updated = db.query(models.User).filter(models.User.id==id)
     prev_id = updated.first()
     if not prev_id:
